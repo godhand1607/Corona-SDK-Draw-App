@@ -81,8 +81,6 @@ function d:new(array)
     local dMinY = nil;
     local dMaxY = nil;
 
-
-
     --canvas:insert(triagleGroup);
     --triagleGroup.x = -canvas.width*0.5;
     --triagleGroup.y = -canvas.height*0.5
@@ -90,7 +88,8 @@ function d:new(array)
     --triagleGroup.height = canvas.height
     --triagleGroup.x = 0;
     --triagleGroup.y = 0;
-    local function createDrawBounderies( xMax,xMin,yMax,yMin )
+
+    function createDrawBounderies( xMax,xMin,yMax,yMin )
         -- Creating a rectangle with the bounderies of the draw
         local Q1 = Vector2D:new(xMin,yMax)
         local Q2 = Vector2D:new(xMin,yMin)
@@ -117,7 +116,8 @@ function d:new(array)
         --print(triagleGroup.width,triagleGroup.height);
         --return {w = w,h = h};
     end
-    local function optmizeDraw()
+
+    function optmizeDraw()
         local filename= "temp"..draw_count..".png";
         local center = createDrawBounderies(dMaxX,dMinX,dMaxY,dMinY );
         local w = triagleGroup.width;
@@ -149,15 +149,13 @@ function d:new(array)
         lMaxY = lastPoint.y;
         lMinY = lastPoint.y;
     end
-    local function ADD_CIRCLE(vec,rotation)
 
+    function ADD_CIRCLE(vec,rotation)
         local myCircle2 = display.newCircle( vec.x,vec.y, vec.width*0.5 + overdraw*0.5 )
-
 
         myCircle2.fill = {
             type = "image",
             filename = "pen_pattern.png",
-
         }
         myCircle2.fill.rotation = rotation;
         --myCircle2.alpha = 0.8;
@@ -167,20 +165,18 @@ function d:new(array)
         --table.insert(objArray,myCircle2);
     end
 
-    local function ADD_RETANGLE(A, B, C,D,cur, val,rotation)
+    function ADD_RETANGLE(A, B, C,D,cur, val,rotation)
         -- Finding the positions of the Rectangle
         local minY = mMin(A.y,mMin(B.y,mMin(C.y,D.y)));
         local maxY = mMax(A.y,mMax(B.y,mMax(C.y,D.y)));
         local minX = mMin(A.x,mMin(B.x,mMin(C.x,D.x)));
         local maxX = mMax(A.x,mMax(B.x,mMax(C.x,D.x)));
 
-
         -- Discovering the boundering of the drawing;
         dMinY = mMin(dMinY,minY);
         dMaxY = mMax(dMaxY,maxY);
         dMinX = mMin(dMinX,minX);
         dMaxX = mMax(dMaxX,maxX);
-
 
         -- Finding the Rectangle that incapsulate
         local Q1 = Vector2D:new(minX,maxY)
@@ -209,103 +205,94 @@ function d:new(array)
         o.x = x;
         o.y = y;
         triagleGroup:insert(o);
-
-
     end
 
-    local function drawLines(linePoints)
-            local numberOfVertices = #linePoints * 18;
+    function drawLines(linePoints)
+        local numberOfVertices = #linePoints * 18;
 
-            --LineVertex *vertices = calloc(sizeof(LineVertex), numberOfVertices);
+        --LineVertex *vertices = calloc(sizeof(LineVertex), numberOfVertices);
 
-            local prevPoint = linePoints[1];
-            local prevValue = prevPoint.width;
-            local curValue;
-            local index = 0;
-            for i=2,#linePoints do
-                local curPoint = linePoints[i]
-                local curValue = curPoint.width;
-                -- equal points, skip them
-                if (Vector2D:equals(curPoint, prevPoint) )then
-
-                    return false;
-                end
-
-
-                local dir = Vector2D:Sub(curPoint, prevPoint);
-                local xDiff = prevPoint.x - curPoint.x;
-                local yDiff = prevPoint.y - curPoint.y;
-                local rotation =  math.atan2(yDiff, xDiff) * (180 / math.pi);
-
-
-                local perpendicular = Vector2D:Normalize(Vector2D:perpendicular(dir));
-                local A = prevC;
-                local B = prevD;
-                if (A ==nil and B == nil) then
-                    A = Vector2D:Add(prevPoint, Vector2D:Mult(perpendicular, prevValue / 2));
-                    B = Vector2D:Sub(prevPoint, Vector2D:Mult(perpendicular, prevValue / 2));
-                    ADD_CIRCLE(curPoint,rotation);
-                    ADD_CIRCLE(linePoints[#linePoints -1],rotation);
-                    --print("Starting Line")
-                else
-                    ADD_CIRCLE(curPoint,rotation);
-                end
-                local C = Vector2D:Add(curPoint, Vector2D:Mult(perpendicular, curValue / 2));
-                local D = Vector2D:Sub(curPoint, Vector2D:Mult(perpendicular, curValue / 2));
-                -- continuing line
-
-                prevD = D;
-                prevC = C;
-
-                if (finishingLine == true and (i == #linePoints)) then
-                    ADD_CIRCLE(linePoints[#linePoints -1],rotation);
-                    ADD_CIRCLE(curPoint,rotation);
-                    --[circlesPoints addObject:[linePoints objectAtIndex:i - 1]];
-                    --[circlesPoints addObject:pointValue];
-
-                    finishingLine = false;
-                    print("finishing line");
-                    print("Trying to find a way to otimizate the drawing")
-                    print("Myabe is Better to redraw as a single object the line that is complete.")
-                    --optmizeDraw();
-
-                end
-                prevPoint = curPoint;
-                prevValue = curValue;
-                --ADD_RETANGLE(A,B,C,D,curPoint,1,rotation);
-                --! Add overdraw
-                local F = Vector2D:Add(A, Vector2D:Mult(perpendicular, overdraw));
-                local G = Vector2D:Add(C, Vector2D:Mult(perpendicular, overdraw));
-                local H = Vector2D:Sub(B, Vector2D:Mult(perpendicular, overdraw));
-                local I = Vector2D:Sub(D, Vector2D:Mult(perpendicular, overdraw));
-                --! end vertices of last line are the start of this one, also for the overdraw
-                if (connectingLine== true or index > 6) then
-                  F = prevG;
-                  H = prevI;
-                end
-
-                prevG = G;
-                prevI = I;
-                ADD_RETANGLE(F,G,H,I,curPoint,1,rotation);
-                --ADD_TRIANGLE(F, A, G, 2.0);
-                --ADD_TRIANGLE(A, G, C, 2.0);
-                --ADD_TRIANGLE(B, H, D, 2.0);
-                --ADD_TRIANGLE(H, D, I, 2.0);
-                index = index+1;
+        local prevPoint = linePoints[1];
+        local prevValue = prevPoint.width;
+        local curValue;
+        local index = 0;
+        for i=2,#linePoints do
+            local curPoint = linePoints[i]
+            local curValue = curPoint.width;
+            -- equal points, skip them
+            if (Vector2D:equals(curPoint, prevPoint) )then
+                return false;
             end
+
+            local dir = Vector2D:Sub(curPoint, prevPoint);
+            local xDiff = prevPoint.x - curPoint.x;
+            local yDiff = prevPoint.y - curPoint.y;
+            local rotation =  math.atan2(yDiff, xDiff) * (180 / math.pi);
+
+            local perpendicular = Vector2D:Normalize(Vector2D:perpendicular(dir));
+            local A = prevC;
+            local B = prevD;
+            if (A ==nil and B == nil) then
+                A = Vector2D:Add(prevPoint, Vector2D:Mult(perpendicular, prevValue / 2));
+                B = Vector2D:Sub(prevPoint, Vector2D:Mult(perpendicular, prevValue / 2));
+                ADD_CIRCLE(curPoint,rotation);
+                ADD_CIRCLE(linePoints[#linePoints -1],rotation);
+                --print("Starting Line")
+            else
+                ADD_CIRCLE(curPoint,rotation);
+            end
+            local C = Vector2D:Add(curPoint, Vector2D:Mult(perpendicular, curValue / 2));
+            local D = Vector2D:Sub(curPoint, Vector2D:Mult(perpendicular, curValue / 2));
+            -- continuing line
+
+            prevD = D;
+            prevC = C;
+
+            if (finishingLine == true and (i == #linePoints)) then
+                ADD_CIRCLE(linePoints[#linePoints -1],rotation);
+                ADD_CIRCLE(curPoint,rotation);
+                --[circlesPoints addObject:[linePoints objectAtIndex:i - 1]];
+                --[circlesPoints addObject:pointValue];
+
+                finishingLine = false;
+                print("finishing line");
+                print("Trying to find a way to otimizate the drawing")
+                print("Myabe is Better to redraw as a single object the line that is complete.")
+                --optmizeDraw();
+            end
+            prevPoint = curPoint;
+            prevValue = curValue;
+            --ADD_RETANGLE(A,B,C,D,curPoint,1,rotation);
+            --! Add overdraw
+            local F = Vector2D:Add(A, Vector2D:Mult(perpendicular, overdraw));
+            local G = Vector2D:Add(C, Vector2D:Mult(perpendicular, overdraw));
+            local H = Vector2D:Sub(B, Vector2D:Mult(perpendicular, overdraw));
+            local I = Vector2D:Sub(D, Vector2D:Mult(perpendicular, overdraw));
+            --! end vertices of last line are the start of this one, also for the overdraw
+            if (connectingLine== true or index > 6) then
+              F = prevG;
+              H = prevI;
+            end
+
+            prevG = G;
+            prevI = I;
+            ADD_RETANGLE(F,G,H,I,curPoint,1,rotation);
+            --ADD_TRIANGLE(F, A, G, 2.0);
+            --ADD_TRIANGLE(A, G, C, 2.0);
+            --ADD_TRIANGLE(B, H, D, 2.0);
+            --ADD_TRIANGLE(H, D, I, 2.0);
+            index = index+1;
+        end
 
         if (index > 0) then
             connectingLine = true;
         end
-
     end
 
-
-    local function calculateSmoothLinePoints()
-
+    function calculateSmoothLinePoints()
         -- 1 We need at least 3 points to use quad curves.
 
-        if(#points > 2) then
+        if (#points > 2) then
             local smoothedPoints = {};
             -- 2 Each time we need our current point and 2 previous ones.
             for i=3,#points do
@@ -345,8 +332,6 @@ function d:new(array)
 
                 --finalPoint.width = 2;
                 table.insert(smoothedPoints, finalPoint);
-
-
             end
 
             -- 8 Since we will be drawing right after this function, we don’t need old points except the last 2. That way each time user moves his finger we can draw next segment.
@@ -359,45 +344,45 @@ function d:new(array)
             return nil;
         end
     end
-    local function draw()
+
+    function draw()
         local smoothedPoints = calculateSmoothLinePoints();
         if (smoothedPoints) then
             drawLines(smoothedPoints)
         end
-
     end
 
-    local function extractSize(vec)
+    function extractSize(vec)
         local prevP = points[#points];
         if prevP then
             local d = mMin(mMax(minWidth,  Vector2D:Dist(vec,prevP)), maxWidth);
             --print(d);
-
             return d;
         else
             return maxWidth;
         end
     end
 
-    local function addPoint(vec,width)
+    function addPoint(vec,width)
         local point = vec;
         point.width = width;
         points[#points+1] = point;
         draw();
         --calculateSmoothLinePoints();
     end
-    local function startNewLineFrom(vec,width)
+
+    function startNewLineFrom(vec,width)
         connectingLine = false;
         addPoint(vec,width);
     end
-    local function endLineAt(vec,width)
+
+    function endLineAt(vec,width)
         finishingLine = true;
         addPoint(vec,width);
-
         --save();
     end
 
-    local newLine = function(event)
+    function newLine(event)
         local point = Vector2D:new(event.x,event.y);
 
         if event.phase=="began" then
@@ -451,30 +436,28 @@ function d:new(array)
     -- Methods
     -----------------------------------
 
-    group.cleanDraw = function()
+    group.cleanDraw = function ()
         if triagleGroup then
             triagleGroup:removeSelf();
         end
         triagleGroup = nil;
         triagleGroup = display.newGroup();
     end
-    group.changeColor = function(colorArray)
+
+    group.changeColor = function (colorArray)
         lineColor = colorArray
     end
-    group.saveAsImage = function(imageName)
 
+    group.saveAsImage = function (imageName)
         createDrawBounderies(dMaxX,dMinX,dMaxY,dMinY );
-
         display.save( triagleGroup, {
             filename = imageName,
             baseDir = system.DocumentsDirectory ,
             isFullResolution = true,
         } )
-
-
     end
-    group.clean = function()
 
+    group.clean = function ()
         if triagleGroup then
             triagleGroup:removeSelf();
         end
@@ -518,8 +501,8 @@ function d:new(array)
         drawLines = nil;
         ADD_RETANGLE = nil;
         ADD_CIRCLE = nil;
-
     end
+
     return group;
 end
 
