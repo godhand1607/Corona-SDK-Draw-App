@@ -1,75 +1,93 @@
 -- MAIN.LUA
-_W = display.contentWidth;
-_H = display.contentHeight;
+_W = display.contentWidth
+_H = display.contentHeight
 
-local bg = display.newRect(_W,_H,_W,_H)
-bg.x = _W*0.5;
-bg.y  = _H*0.5;
-bg:setFillColor(1,1,1,0)
+local bg = display.newRect( _W, _H, _W, _H )
+bg.x = _W * 0.5
+bg.y = _H * 0.5
+bg:setFillColor( 1, 1, 1, 0 )
 
-local widget = require "widget"
-local color = { math.random(1,255)/255,math.random(1,255)/255,math.random(1,255)/255,1 }
-local drawingGroup = require("drawing"):new({
-    Color = color,
-    width = display.contentWidth, -- width of the drawing canvas
-    height = display.contentHeight, -- height of th drawing canvas
-});
-drawingGroup.x = _W * 0.5;
-drawingGroup.y = _H * 0.5;
-drawingGroup.width = width;
-drawingGroup.height = height
+function getRandomColor()
+    return {
+        math.random( 1, 255 ) / 255,
+        math.random( 1, 255 ) / 255,
+        math.random( 1, 255 ) / 255,
+        1
+    }
+end
+
+function getRandomWidth()
+    return math.random( 1, 9 )
+end
+
+local widget = require( "widget" )
+local drawingGroup = require( "lib.canvas" ):new({
+    lineColor = getRandomColor(),
+    lineWidth = getRandomWidth(),
+    width = _W, -- width of the drawing canvas
+    height = _H, -- height of the drawing canvas
+})
+drawingGroup.x = _W * 0.5
+drawingGroup.y = _H * 0.5
+
+
 -----------------------------------
 -- UNDO & Change Color FUNCTIONS (not required)
 -----------------------------------
 
-function erase()
-    drawingGroup.cleanDraw();
+function changeColor()
+    drawingGroup.changeColor(getRandomColor())
 end
 
-function changeColor()
-    color = { math.random(1,255)/255,math.random(1,255)/255,math.random(1,255)/255,1 }
-    drawingGroup.changeColor(color);
+function changeWidth()
+    drawingGroup.changeWidth(getRandomWidth())
+end
+
+function erase()
+    drawingGroup.cleanDraw()
 end
 
 function save()
-    drawingGroup.saveAsImage("saveBtn.png");
+    drawingGroup.saveAsImage( "image.png" )
 end
+
 
 -----------------------------------
 -- UNDO & ERASE BUTTONS (not required)
 -----------------------------------
 
-local eraseButton = widget.newButton{
-    left = display.contentWidth-125,
-    top = display.contentHeight - 50,
-    label = "Erase",
-    width = 100, height = 28,
-    cornerRadius = 8,
-    onRelease = erase
-}
-
 local colorButton = widget.newButton{
-    left = display.contentWidth-325,
-    top = display.contentHeight - 50,
+    left = display.contentWidth - 305,
+    top = display.contentHeight - 75,
     label = "Change Color",
     width = 100, height = 28,
     cornerRadius = 8,
     onRelease = changeColor
 }
 
+local widthButton = widget.newButton{
+    left = display.contentWidth - 125,
+    top = display.contentHeight - 75,
+    label = "Change Width",
+    width = 100, height = 28,
+    cornerRadius = 8,
+    onRelease = changeWidth
+}
+
+local clearButton = widget.newButton{
+    left = display.contentWidth - 305,
+    top = display.contentHeight - 45,
+    label = "Clear",
+    width = 100, height = 28,
+    cornerRadius = 8,
+    onRelease = erase
+}
+
 local saveButton = widget.newButton{
-    left = display.contentWidth-210,
-    top = display.contentHeight - 50,
+    left = display.contentWidth - 125,
+    top = display.contentHeight - 45,
     label = "Save Image",
     width = 100, height = 28,
     cornerRadius = 8,
     onRelease = save
 }
-
-
-
-
-
-
-
-
